@@ -1,6 +1,4 @@
-import pygame
-import random
-import math
+import pygame, random, math, sys
 
 # Initialize Pygame
 pygame.init()
@@ -19,6 +17,10 @@ BLACK = (0, 0, 0)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Space Invaders")
 
+#Add bg and resize
+bg_image = pygame.image.load('Space Invaders/assets/background.jpg')
+bg_image = pygame.transform.scale(bg_image, (WIDTH, HEIGHT))
+
 # Load and scale images for player, enemy, and bullet
 player_img = pygame.image.load("Space Invaders/assets/player.png")
 enemy_img = pygame.image.load("Space Invaders/assets/enemy.png")
@@ -26,7 +28,7 @@ bullet_img = pygame.image.load("Space Invaders/assets/bullet.jpg")
 
 player_img = pygame.transform.scale(player_img, (50, 50))
 enemy_img = pygame.transform.scale(enemy_img, (50, 50))
-bullet_img = pygame.transform.scale(bullet_img, (10, 30))
+bullet_img = pygame.transform.scale(bullet_img, (30, 30))
 
 # Player properties
 player_x = WIDTH // 2 - 25  # Center player horizontally
@@ -75,10 +77,34 @@ def is_collision(enemy_x, enemy_y, bullet_x, bullet_y):
     distance = math.sqrt((math.pow(enemy_x - bullet_x, 2)) + (math.pow(enemy_y - bullet_y, 2)))
     return distance < 27  # If distance is small enough, it's a hit
 
+def is_player_hit(enemy_x, enemy_y, player_x, player_y):
+        """Collision Hitbox/Box"""
+        player_width, player_height = 50, 50
+        enemy_width, enemy_height = 50, 50
+        
+        if (player_x < enemy_x + enemy_width and
+            player_x + player_width > enemy_x and
+            player_y < enemy_y + enemy_height and
+            player_y + player_height > enemy_y):
+            return True
+        return False
+
+def game_over():
+    """Game Over Screen"""
+    global running
+    screen.fill(BLACK)
+    font_large = pygame.font.Font(None, 72)
+    text = font_large.render("GAME OVER", True, RED)
+    screen.blit(text, (WIDTH // 2 - 150, HEIGHT // 2 - 50))
+    pygame.display.update()
+    pygame.time.delay(5000)  # Pause for 5 seconds
+    running = False  # Stop the game
+
 # Main game loop
 while running:
     screen.fill(BLACK)  # Clear screen every frame
-
+    screen.blit(bg_image, (0,0))
+    
     # Event handling
     for event in pygame.event.get():
         if event.type == pygame.QUIT:  # Quit the game if window is closed
@@ -86,9 +112,9 @@ while running:
 
     # Player movement controls
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT] and player_x > 0:
+    if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and player_x > 0:
         player_x -= player_speed
-    if keys[pygame.K_RIGHT] and player_x < WIDTH - 50:
+    if (keys[pygame.K_RIGHT] or keys[pygame.K_d]) and player_x < WIDTH - 50:
         player_x += player_speed
     if keys[pygame.K_SPACE] and bullet_state == "ready":  # Fire bullet
         bullet_x = player_x
@@ -122,6 +148,9 @@ while running:
             enemy[1] = random.randint(50, 150)
             
         draw_enemy(enemy[0], enemy[1])
+
+        if is_player_hit(enemy[0], enemy[1], player_x, player_y):
+            game_over()        
         
     # Draw player on screen
     draw_player(player_x, player_y)
@@ -131,6 +160,7 @@ while running:
     screen.blit(score_text, (10, 10))
     
     pygame.display.update()  # Update the display
-    clock.tick(10)  # Limit frame rate to 30 FPS
+    clock.tick(144)  # Limit frame rate to 30 FPS
     
 pygame.quit()  # Exit game when loop ends
+
