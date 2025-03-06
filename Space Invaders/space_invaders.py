@@ -23,12 +23,19 @@ bg_image = pygame.transform.scale(bg_image, (WIDTH, HEIGHT))
 
 # Load and scale images for player, enemy, and bullet
 player_img = pygame.image.load("Space Invaders/assets/player.png")
-enemy_img = pygame.image.load("Space Invaders/assets/enemy.png")
-bullet_img = pygame.image.load("Space Invaders/assets/bullet.jpg")
+bullet_img = pygame.image.load("Space Invaders/assets/bullet1.png")
 
 player_img = pygame.transform.scale(player_img, (50, 50))
-enemy_img = pygame.transform.scale(enemy_img, (50, 50))
 bullet_img = pygame.transform.scale(bullet_img, (30, 30))
+
+# Load multiple enemy images
+enemy_images = [
+    pygame.transform.scale(pygame.image.load("Space Invaders/assets/enemy1.png"), (50, 50)),
+    pygame.transform.scale(pygame.image.load("Space Invaders/assets/enemy2.png"), (50, 50)),
+    pygame.transform.scale(pygame.image.load("Space Invaders/assets/enemy3.png"), (50, 50)),
+    pygame.transform.scale(pygame.image.load("Space Invaders/assets/enemy4.png"), (50, 50)),
+    pygame.transform.scale(pygame.image.load("Space Invaders/assets/enemy5.png"), (50, 50))
+]
 
 # Player properties
 player_x = WIDTH // 2 - 25  # Center player horizontally
@@ -39,10 +46,12 @@ player_speed = 5
 num_enemies = 5
 enemies = []
 for _ in range(num_enemies):
-    enemy_x = random.randint(50, WIDTH - 50)
-    enemy_y = random.randint(50, 150)
-    enemy_speed = 3
-    enemies.append([enemy_x, enemy_y, enemy_speed])
+    enemies.append({
+        "x": random.randint(50, WIDTH - 50),
+        "y": random.randint(50, 150),
+        "speed": 3,
+        "image": random.choice(enemy_images)  # Random enemy sprite
+    })
 
 # Bullet properties
 bullet_x = 0
@@ -61,10 +70,11 @@ clock = pygame.time.Clock()
 def draw_player(x, y):
     """Draws the player on the screen."""
     screen.blit(player_img, (x, y))
+
     
-def draw_enemy(x, y):
+def draw_enemy(enemy):
     """Draws an enemy on the screen."""
-    screen.blit(enemy_img, (x, y))
+    screen.blit(enemy["image"], (enemy["x"], enemy["y"]))
 
 def fire_bullet(x, y):
     """Fires the bullet from the player's position."""
@@ -132,24 +142,25 @@ while running:
         
     # Enemy movement
     for enemy in enemies:
-        enemy[0] += enemy[2]  # Move enemy left or right
+        enemy["x"] += enemy["speed"]  # Move enemy left or right
         
         # Reverse direction and move down when reaching screen edges
-        if enemy[0] <= 0 or enemy[0] >= WIDTH - 50:
-            enemy[2] *= -1
-            enemy[1] += 40  # Move down
+        if enemy["x"] <= 0 or enemy["x"] >= WIDTH - 50:
+            enemy["speed"] *= -1
+            enemy["y"] += 40  # Move down
         
-        # Check for collision
-        if is_collision(enemy[0], enemy[1], bullet_x, bullet_y):
+        # Check for collision with bullet
+        if is_collision(enemy["x"], enemy["y"], bullet_x, bullet_y):
             bullet_y = player_y
             bullet_state = "ready"
             score += 1
-            enemy[0] = random.randint(50, WIDTH - 50)  # Respawn enemy at new position
-            enemy[1] = random.randint(50, 150)
+            enemy["x"] = random.randint(50, WIDTH - 50)  # Respawn enemy
+            enemy["y"] = random.randint(50, 150)
+            enemy["image"] = random.choice(enemy_images)  # Assign new random image
             
-        draw_enemy(enemy[0], enemy[1])
+        draw_enemy(enemy) #Improve
 
-        if is_player_hit(enemy[0], enemy[1], player_x, player_y):
+        if is_player_hit(enemy["x"], enemy["y"], player_x, player_y):
             game_over()        
         
     # Draw player on screen
@@ -158,9 +169,32 @@ while running:
     # Display score
     score_text = font.render(f"Score: {score}", True, WHITE)
     screen.blit(score_text, (10, 10))
-    
-    pygame.display.update()  # Update the display
+    pygame.display.update()  # Update the display    
     clock.tick(144)  # Limit frame rate to 30 FPS
     
 pygame.quit()  # Exit game when loop ends
 
+
+
+# Patterns To be Implemented
+"""
+Pattern 1 [
+    * * * * * *
+   * * * * * * *
+    * * * * * *
+]
+Pattern 2 [
+    * * * * * *
+     * * * * * *
+      * * * * * *
+]
+Pattern 3 [
+    * * * * *
+     * * * *
+      * * *
+       * *
+        *
+]
+
+More patterns to come
+"""
